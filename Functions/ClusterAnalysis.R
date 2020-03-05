@@ -46,9 +46,6 @@ plotProfile <- function(cluster, k="none"){
     stat_summary(fun.y=median, geom="line", aes(group=1), alpha=0.1, size = 1.5) +
     ylim(0, 0.25) 
 }
-
-plotProfile(cluster, 4) + ggtitle("Clusters expression profiles")
-
 findNitrateGenes <- function(cluster, k="none"){
   if(k=="none"){
     genesK <- names(cluster[[1]])
