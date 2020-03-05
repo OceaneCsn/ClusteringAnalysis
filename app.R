@@ -41,14 +41,14 @@ ui <- dashboardPage(skin="black",
                                 hr(),textOutput("test"),
                                 fixedRow(
                                   column(
-                                    width = 6,
-                                    plotOutput("profiles", height="800px")
+                                    width = 5,
+                                    plotOutput("profiles", height="700px")
                                   ),
                                   column(
-                                    width = 6,
+                                    width = 5,
                                     tabsetPanel(type = "tabs",
-                                                tabPanel("Ontologies", DT::dataTableOutput("Ontologies"))
-                                                # tabPanel("Heatmap", plotOutput("heatmap"), br(), plotOutput("expression_plot"))
+                                                tabPanel("Ontologies", DT::dataTableOutput("Ontologies")),
+                                                tabPanel("Nitrate pathways enrichment", plotOutput("rank",height="700px"))
                                     )
                                   )
                                 )
@@ -74,6 +74,15 @@ server <- function(input, output) {
     if(input$k == "All"){findNitrateGenes(cluster)}
     else{findNitrateGenes(cluster, input$k)}
   })
+  
+  output$rank <- renderPlot({
+    load(paste0("./Clusterings/",input$select))
+    rankClusters(cluster)
+  })
+  
+  
+  
+  
   
   output$test<- renderText({
     print(input$k)

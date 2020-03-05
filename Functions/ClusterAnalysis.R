@@ -1,5 +1,7 @@
 library(ggplot2)
 library(gridExtra)
+library(reshape2)
+
 suppressMessages(library(coseq, warn.conflicts = F, quietly = T))
 
 
@@ -16,21 +18,23 @@ plotProfile <- function(cluster, k="none"){
   # plot all the profiles or the profile of cluster k
   results <- cluster[[2]]
   clusters <- cluster[[1]]
-  
-  #plots <- plot(results, conds = groups, collapse_reps="average", graphs = c("ICL", "boxplots", "profiles", "probapost_barplots"))
   profiles <- data.frame(results@y_profiles)
   profiles$gene <- rownames(profiles)
   d <- melt(profiles)
   d$group <- str_split_fixed(d$variable, '_', 2)[,1]
   d$cluster <- clusters[match(d$gene, names(clusters))]
   if(k=="none"){
-    ggplot(data = d, aes(x=group, y=value)) + geom_violin(alpha=0.7, aes( color = group), fill = "grey")  + geom_jitter(width = 0.1, alpha=0.01) +facet_wrap(~cluster) +
+     g <- ggplot(data = d, aes(x=group, y=value)) + geom_violin(alpha=0.7, aes( color = group), fill = "grey")  + geom_jitter(width = 0.1, alpha=0.01) +facet_wrap(~cluster) +
       ylim(0, 0.3) + scale_colour_discrete("Condition")
   }
   else{
-    ggplot(data = d[d$cluster==k,], aes(x=group, y=value)) + geom_violin(alpha=0.7, aes(color = group), fill = "grey")  + geom_jitter(width = 0.1, alpha=0.02) +
+    g <- ggplot(data = d[d$cluster==k,], aes(x=group, y=value)) + geom_violin(alpha=0.7, aes(color = group), fill = "grey")  + geom_jitter(width = 0.1, alpha=0.02) +
       scale_colour_discrete("Condition") 
   }
+  g +theme(plot.title = element_text(size=22, face="bold"),strip.text.x = element_text(size = 20),
+           legend.title = element_text(size = 25, face="bold"), legend.text = element_text(size=20),
+           axis.text.y = element_text(size = 18, angle = 30), axis.text.x = element_text(size = 20, hjust = 0, colour = "grey50"),
+           axis.title=element_text(size=17))
 }
 
 findNitrateGenes <- function(cluster, k="none"){
@@ -50,6 +54,28 @@ findNitrateGenes <- function(cluster, k="none"){
   return(res)
 }
 
+rankClusters <- function(cluster){
+  clusterStats <- c()
+  clusterStatsAbs <- c()
+  for( k in seq(1:max(cluster[[1]]))){
+    tab <- findNitrateGenes(cluster, k)
+    
+    clusterStats <- c(clusterStats, sum(tab$NitrateScore)/dim(tab)[1]/3)
+    
+    clusterStatsAbs <- c(clusterStatsAbs, sum(tab$NitrateScore)/3)
+  }
+  names(clusterStats) <- seq(1:max(cluster[[1]]))
+  names(clusterStatsAbs) <- seq(1:max(cluster[[1]]))
+  
+  
+  d <- data.frame(Cluster = names(clusterStats), Enrichment.Rate = clusterStats, Absolute.Enrichment = clusterStatsAbs)
+  d <- melt(d)
+  ggplot(data=d, aes(x=Cluster, y=value, fill = Cluster)) + geom_bar(stat="identity",alpha=0.4, color="black")+ facet_wrap(~variable, nrow=1, scales="free" )+
+    theme(plot.title = element_text(size=22, face="bold"),strip.text.x = element_text(size = 26), legend.position = "none",
+          legend.title = element_text(size = 25, face="bold"), legend.text = element_text(size=20),
+          axis.text.y = element_text(size = 18, angle = 30), axis.text.x = element_text(size = 20, hjust = 0, colour = "grey50"),
+          axis.title=element_text(size=17)) + coord_flip()
+}
 
 #findNitrateGenes(5,cluster)
 
