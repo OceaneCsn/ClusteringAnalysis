@@ -33,7 +33,7 @@ plotProfile <- function(cluster, k="none"){
   }
   g +theme(plot.title = element_text(size=22, face="bold"),strip.text.x = element_text(size = 20),
            legend.title = element_text(size = 25, face="bold"), legend.text = element_text(size=20),
-           axis.text.y = element_text(size = 18, angle = 30), axis.text.x = element_text(size = 20, hjust = 0, colour = "grey50"),
+           axis.text.y = element_text(size = 18, angle = 30), axis.text.x = element_text(size = 0, hjust = 0, colour = "grey50"),
            axis.title=element_text(size=17))
 }
 
@@ -51,6 +51,7 @@ findNitrateGenes <- function(cluster, k="none"){
   res[,c("Name", "Description")] <- ontologies[match(res$Gene, ontologies$ensembl_gene_id),c("external_gene_name", "description")]
   res$NitrateScore <- rowSums(res[,grepl("_", colnames(res))])
   res <- res[order(-res$NitrateScore),]
+  res$cluster <- cluster[[1]][match(res$Gene, names(cluster[[1]]))]
   return(res)
 }
 
@@ -70,7 +71,7 @@ rankClusters <- function(cluster){
   
   d <- data.frame(Cluster = names(clusterStats), Enrichment.Rate = clusterStats, Absolute.Enrichment = clusterStatsAbs)
   d <- melt(d)
-  ggplot(data=d, aes(x=Cluster, y=value, fill = Cluster)) + geom_bar(stat="identity",alpha=0.4, color="black")+ facet_wrap(~variable, nrow=1, scales="free" )+
+  ggplot(data=d, aes(x=Cluster, y=value, fill = Cluster)) + geom_bar(stat="identity",alpha=0.3, color="black")+ facet_wrap(~variable, nrow=1, scales="free" )+
     theme(plot.title = element_text(size=22, face="bold"),strip.text.x = element_text(size = 26), legend.position = "none",
           legend.title = element_text(size = 25, face="bold"), legend.text = element_text(size=20),
           axis.text.y = element_text(size = 18, angle = 30), axis.text.x = element_text(size = 20, hjust = 0, colour = "grey50"),
