@@ -1,3 +1,5 @@
+
+
 library(shiny)
 library(shinythemes)
 library(DT)
@@ -6,7 +8,8 @@ library(ggplot2)
 library(shinydashboard)
 setwd("./")
 source("Functions/ClusterAnalysis.R")
-#options(bitmapType='cairo')
+options(bitmapType='cairo')
+
 
 listFiles <- list.files("./Clusterings/", full.names = F)
 names(listFiles) = listFiles
@@ -38,7 +41,7 @@ ui <- dashboardPage(skin="black",
                                             choices = files),
                                 selectInput("k", label = h3("Select cluster"), width = 2000,
                                             choices = clustList, selected = "All"),
-                                hr(),textOutput("test"),
+                                hr(),
                                 fixedRow(
                                   column(
                                     width = 5,
