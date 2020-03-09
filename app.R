@@ -8,7 +8,7 @@ library(ggplot2)
 library(shinydashboard)
 setwd("./")
 source("Functions/ClusterAnalysis.R")
-options(bitmapType='cairo')
+#options(bitmapType='cairo')
 
 
 listFiles <- list.files("./Clusterings/", full.names = F)
@@ -51,7 +51,7 @@ ui <- dashboardPage(skin="black",
                                     width = 5,
                                     tabsetPanel(type = "tabs",
                                                 tabPanel("Ontologies", DT::dataTableOutput("Ontologies")),
-                                                tabPanel("Nitrate pathways enrichment", plotOutput("rank",height="700px"))
+                                                tabPanel("Nitrate pathways enrichment", plotlyOutput("rank",height="700px"))
                                     )
                                   )
                                 )
@@ -78,13 +78,10 @@ server <- function(input, output) {
     else{findNitrateGenes(cluster, input$k)}
   })
   
-  output$rank <- renderPlot({
+  output$rank <- renderPlotly({
     load(paste0("./Clusterings/",input$select))
     rankClusters(cluster)
   })
-  
-  
-  
   
   
   output$test<- renderText({

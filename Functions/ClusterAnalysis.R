@@ -4,6 +4,7 @@ library(reshape2)
 
 suppressMessages(library(coseq, warn.conflicts = F, quietly = T))
 
+library(plotly)
 
 load("./Data/OntologyAllGenes.RData")
 load("./Data/filteredData.RData")
@@ -37,15 +38,21 @@ plotProfile <- function(cluster, k="none"){
      g <- ggplot(data = d, aes(x=group, y=value)) + geom_violin(alpha=0.7, lwd=1.2, aes( color = group), fill = "grey", outlier.color = "black",outlier.alpha =0.1)  + geom_jitter(width = 0.1, alpha=0.015) +facet_wrap(~cluster, nrow=4) 
   }
   else{
-    g <- ggplot(data = d[d$cluster==k,], aes(x=group, y=value)) + geom_violin(lwd=1.2, outlier.alpha =0.2, outlier.color = "black", alpha=0.7, aes(color = group), fill = "grey")  + geom_jitter(width = 0.1, alpha=0.0015) 
+    g <- ggplot(data = d[d$cluster==k,], aes(x=group, y=value, text=group)) + geom_boxplot(lwd=1.2, outlier.alpha =0.2, outlier.color = "black", alpha=0.7, aes(color = group), fill = "grey")  + geom_jitter(width = 0.1, alpha=0.0015) 
   }
-  g +theme(plot.title = element_text(size=22, face="bold"),strip.text.x = element_text(size = 20),legend.position="bottom",legend.spacing=unit(0.3, "cm"),
+  g <- g +theme(plot.title = element_text(size=22, face="bold"),strip.text.x = element_text(size = 20),legend.position="bottom",legend.spacing=unit(0.3, "cm"),
            legend.title = element_text(size = 2, face="bold"), legend.text = element_text(size=8.5, angle=0),legend.key.width = unit(0.15, "cm"),
            axis.text.y = element_text(size = 18, angle = 30), axis.text.x = element_text(size = 0, hjust = 0, colour = "grey50"),legend.text.align=1,
            axis.title=element_text(size=24)) + xlab("") + ylab("Normalized expression") + scale_colour_discrete("", labels=sapply(levels(as.factor(d$group)),translate)) +
     stat_summary(fun.y=median, geom="line", aes(group=1), alpha=0.1, size = 1.5) +
     ylim(0, 0.25) 
+  g
 }
+
+#plotProfile(cluster, k=3)
+
+
+
 findNitrateGenes <- function(cluster, k="none"){
   if(k=="none"){
     genesK <- names(cluster[[1]])
@@ -80,11 +87,11 @@ rankClusters <- function(cluster){
   
   d <- data.frame(Cluster = names(clusterStats), Enrichment.Rate = clusterStats, Absolute.Enrichment = clusterStatsAbs)
   d <- melt(d)
-  ggplot(data=d, aes(x=Cluster, y=value, fill = Cluster)) + geom_bar(stat="identity",alpha=0.3, color="black")+ facet_wrap(~variable, nrow=1, scales="free" )+
+  ggplotly(ggplot(data=d, aes(x=Cluster, y=value, fill = Cluster)) + geom_bar(stat="identity",alpha=0.3, color="black")+ facet_wrap(~variable, nrow=1, scales="free" )+
     theme(plot.title = element_text(size=22, face="bold"),strip.text.x = element_text(size = 26), legend.position = "none",
           legend.title = element_text(size = 25, face="bold"), legend.text = element_text(size=20),
           axis.text.y = element_text(size = 18, angle = 30), axis.text.x = element_text(size = 20, hjust = 0, colour = "grey50"),
-          axis.title=element_text(size=17)) + coord_flip()
+          axis.title=element_text(size=17)) + coord_flip())
 }
 
 #findNitrateGenes(5,cluster)
