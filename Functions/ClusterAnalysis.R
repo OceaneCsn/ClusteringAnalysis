@@ -35,13 +35,13 @@ plotProfile <- function(cluster, k="none"){
   d$group <- str_split_fixed(d$variable, '_', 2)[,1]
   d$cluster <- clusters[match(d$gene, names(clusters))]
   if(k=="none"){
-     g <- ggplot(data = d, aes(x=group, y=value)) + geom_violin(alpha=0.7, lwd=1.2, aes( color = group), fill = "grey", outlier.color = "black",outlier.alpha =0.1)  + geom_jitter(width = 0.1, alpha=0.015) +facet_wrap(~cluster, nrow=4) 
+     g <- ggplot(data = d, aes(x=group, y=value)) + geom_boxplot(alpha=0.7, lwd=1.2, aes( color = group), fill = "grey", outlier.color = "black",outlier.alpha =0.1)  + geom_jitter(width = 0.1, alpha=0.0015) +facet_wrap(~cluster, nrow=4) 
   }
   else{
-    g <- ggplot(data = d[d$cluster==k,], aes(x=group, y=value, text=group)) + geom_boxplot(lwd=1.2, outlier.alpha =0.2, outlier.color = "black", alpha=0.7, aes(color = group), fill = "grey")  + geom_jitter(width = 0.1, alpha=0.0015) 
+    g <- ggplot(data = d[d$cluster==k,], aes(x=group, y=value, text=group)) + geom_boxplot(lwd=1.2, outlier.alpha =0.2, outlier.color = "black", alpha=0.7, aes(color = group), fill = "grey")  + geom_jitter(width = 0.1, alpha=0.005) 
   }
   g <- g +theme(plot.title = element_text(size=22, face="bold"),strip.text.x = element_text(size = 20),legend.position="bottom",legend.spacing=unit(0.3, "cm"),
-           legend.title = element_text(size = 2, face="bold"), legend.text = element_text(size=8.5, angle=0),legend.key.width = unit(0.15, "cm"),
+           legend.title = element_text(size = 2, face="bold"), legend.text = element_text(size=11, angle=0),legend.key.width = unit(0.15, "cm"),
            axis.text.y = element_text(size = 18, angle = 30), axis.text.x = element_text(size = 0, hjust = 0, colour = "grey50"),legend.text.align=1,
            axis.title=element_text(size=24)) + xlab("") + ylab("Normalized expression") + scale_colour_discrete("", labels=sapply(levels(as.factor(d$group)),translate)) +
     stat_summary(fun.y=median, geom="line", aes(group=1), alpha=0.1, size = 1.5) +
