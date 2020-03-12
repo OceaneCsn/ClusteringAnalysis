@@ -9,7 +9,8 @@ library(ggplot2)
 library(shinydashboard)
 setwd("./")
 source("Functions/ClusterAnalysis.R")
-#options(bitmapType='cairo')
+if(version$os=="linux-gnu") options(bitmapType='cairo')
+
 
 load("./Data/OntologyAllGenes.RData")
 
@@ -18,12 +19,12 @@ listFiles <- list.files("./Clusterings/", full.names = F)
 names(listFiles) = listFiles
 files <- lapply(split(listFiles, names(listFiles)), unname)
 
-load("./Clusterings/CO2.RData")
+load("./Clusterings/CO2NoIronStarv.RData")
 clustList <- c("All",unique(cluster[[1]]))
 names(clustList) = clustList
 clustList <- lapply(split(clustList, names(clustList)), unname)
 
-# Define UI for application that draws a histogram
+
 ui <- dashboardPage(skin="black",
                     
                     dashboardHeader(title = "Coseq clustering visualisation"),
@@ -45,7 +46,7 @@ ui <- dashboardPage(skin="black",
                                   column(
                                     width = 6,
                                     selectInput("select", label = h3("Select list of genes"), width = 700,
-                                                choices = files, selected = "CO2.RData")
+                                                choices = files, selected = "CO2NoIronStarv.RData")
                                   ),
                                   column(
                                     width = 6,

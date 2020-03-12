@@ -35,7 +35,7 @@ plotProfile <- function(cluster, k="none"){
   d$group <- str_split_fixed(d$variable, '_', 2)[,1]
   d$cluster <- clusters[match(d$gene, names(clusters))]
   if(k=="none"){
-     g <- ggplot(data = d, aes(x=group, y=value)) + geom_boxplot(alpha=0.7, lwd=1.2, aes( color = group), fill = "grey", outlier.color = "black",outlier.alpha =0.1)  + geom_jitter(width = 0.1, alpha=0.0015) +facet_wrap(~cluster, nrow=4) 
+     g <- ggplot(data = d, aes(x=group, y=value)) + geom_boxplot(alpha=0.7, lwd=1.2, aes( color = group), fill = "grey", outlier.color = "black",outlier.alpha =0.1)  + geom_jitter(width = 0.1, alpha=0.0015) +facet_wrap(~cluster, nrow=3) 
   }
   else{
     g <- ggplot(data = d[d$cluster==k,], aes(x=group, y=value, text=group)) + geom_boxplot(lwd=1.2, outlier.alpha =0.2, outlier.color = "black", alpha=0.7, aes(color = group), fill = "grey")  + geom_jitter(width = 0.1, alpha=0.005) 
