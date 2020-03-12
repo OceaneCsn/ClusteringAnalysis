@@ -40,8 +40,8 @@ plotProfile <- function(cluster, k="none"){
   else{
     g <- ggplot(data = d[d$cluster==k,], aes(x=group, y=value, text=group)) + geom_boxplot(lwd=1.2, outlier.alpha =0.2, outlier.color = "black", alpha=0.7, aes(color = group), fill = "grey")  + geom_jitter(width = 0.1, alpha=0.005) 
   }
-  g <- g +theme(plot.title = element_text(size=22, face="bold"),strip.text.x = element_text(size = 20),legend.position="bottom",legend.spacing=unit(0.3, "cm"),
-           legend.title = element_text(size = 2, face="bold"), legend.text = element_text(size=11, angle=0),legend.key.width = unit(0.15, "cm"),
+  g <- g +theme(plot.title = element_text(size=22, face="bold"),strip.text.x = element_text(size = 20),legend.position="bottom",
+           legend.title = element_text(size = 2, face="bold"), legend.text = element_text(size=18, angle=0),
            axis.text.y = element_text(size = 18, angle = 30), axis.text.x = element_text(size = 0, hjust = 0, colour = "grey50"),legend.text.align=1,
            axis.title=element_text(size=24)) + xlab("") + ylab("Normalized expression") + scale_colour_discrete("", labels=sapply(levels(as.factor(d$group)),translate)) +
     stat_summary(fun.y=median, geom="line", aes(group=1), alpha=0.1, size = 1.5) +
@@ -61,9 +61,9 @@ findNitrateGenes <- function(cluster, k="none"){
     genesK <- names(cluster[[1]][cluster[[1]]==k])
   }
   res <- data.frame(Gene = genesK)
-  res$Wang_2004 = ifelse(res$Gene %in% nGenes$Wang_2004, 1, 0)
-  res$Marchive_2013 = ifelse(res$Gene %in% nGenes$Marchive_2013_20min, 1, 0)
-  res$Widiez_2011 = ifelse(res$Gene %in% nGenes$HN_induced_Widiez_2011, 1, 0)
+  for(paper in colnames(nGenes)){
+    res[,paper] <- ifelse(res$Gene %in% toupper(nGenes[,paper]), 1, 0)
+  }
   res[,c("Name", "Description")] <- ontologies[match(res$Gene, ontologies$ensembl_gene_id),c("external_gene_name", "description")]
   res$NitrateScore <- rowSums(res[,grepl("_", colnames(res))])
   res <- res[order(-res$NitrateScore),]

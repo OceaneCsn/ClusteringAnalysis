@@ -1,5 +1,6 @@
 
 
+
 library(shiny)
 library(shinythemes)
 library(DT)
@@ -10,12 +11,14 @@ setwd("./")
 source("Functions/ClusterAnalysis.R")
 #options(bitmapType='cairo')
 
+load("./Data/OntologyAllGenes.RData")
+
 
 listFiles <- list.files("./Clusterings/", full.names = F)
 names(listFiles) = listFiles
 files <- lapply(split(listFiles, names(listFiles)), unname)
 
-load(paste0("./Clusterings/",files[[1]]))
+load("./Clusterings/CO2.RData")
 clustList <- c("All",unique(cluster[[1]]))
 names(clustList) = clustList
 clustList <- lapply(split(clustList, names(clustList)), unname)
@@ -28,7 +31,7 @@ ui <- dashboardPage(skin="black",
                     dashboardSidebar(
                       sidebarMenu(
                         menuItem("Clustering view", tabName = "view", icon = icon("project-diagram"))
-                        #menuItem("D", tabName = "Expression_data", icon = icon("seedling"))
+                        #menuItem("Ontology database", tabName = "Ontology database", icon = icon("seedling"))
                       )
                     ),
                     
@@ -37,25 +40,38 @@ ui <- dashboardPage(skin="black",
                       tabItems(
                         # First tab content
                         tabItem(tabName = "view",
-                                selectInput("select", label = h3("Select clustering data"), width = 2000,
-                                            choices = files),
-                                selectInput("k", label = h3("Select cluster"), width = 2000,
-                                            choices = clustList, selected = "All"),
-                                hr(),
+                                
                                 fixedRow(
                                   column(
-                                    width = 5,
-                                    plotOutput("profiles", height="700px")
+                                    width = 6,
+                                    selectInput("select", label = h3("Select list of genes"), width = 700,
+                                                choices = files, selected = "CO2.RData")
                                   ),
                                   column(
-                                    width = 5,
+                                    width = 6,
+                                    selectInput("k", label = h3("Select cluster"), width = 700,
+                                            choices = clustList, selected = "All")
+                                  )
+                                ),
+                                hr(),
+                                fixedRow(
+                                    plotOutput("profiles", height="600px", width="1400px"),
+                                    
+                                    hr(),
+
                                     tabsetPanel(type = "tabs",
                                                 tabPanel("Ontologies", DT::dataTableOutput("Ontologies")),
-                                                tabPanel("Nitrate pathways enrichment", plotlyOutput("rank",height="700px"))
-                                    )
+                                                tabPanel("Nitrate pathways enrichment", plotlyOutput("rank",height="400px", width="1500px"))
+                                    
                                   )
                                 )
                         )
+                        # tabItem(tabName = "Ontology database",
+                        #         textInput("gene", "Ask me a gene! (AGI)", value = "AT1G08090"),
+                        #         hr()
+                        #         #DT::dataTableOutput("Ontology")
+                        # )
+                                
                       )
                     )
 )
@@ -78,6 +94,10 @@ server <- function(input, output) {
     else{findNitrateGenes(cluster, input$k)}
   })
   
+  output$Ontology <- DT::renderDataTable({
+    ontologies[input$gene,]
+  })
+  
   output$rank <- renderPlotly({
     load(paste0("./Clusterings/",input$select))
     rankClusters(cluster)
@@ -85,7 +105,7 @@ server <- function(input, output) {
   
   
   output$test<- renderText({
-    print(input$k)
+    print("coucou")
   })
 }
 
