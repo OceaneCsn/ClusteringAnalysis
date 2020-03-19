@@ -1,6 +1,3 @@
-
-
-
 library(shiny)
 library(shinythemes)
 library(DT)
@@ -44,25 +41,25 @@ ui <- dashboardPage(skin="black",
                                 
                                 fixedRow(
                                   column(
-                                    width = 6,
+                                    width = 5,
                                     selectInput("select", label = h3("Select list of genes"), width = 700,
                                                 choices = files, selected = "CO2NoIronStarv.RData")
                                   ),
                                   column(
-                                    width = 6,
-                                    selectInput("k", label = h3("Select cluster"), width = 700,
+                                    width = 3,
+                                    selectInput("k", label = h3("Select cluster"), width = 300,
                                             choices = clustList, selected = "All")
                                   )
                                 ),
                                 hr(),
                                 fixedRow(
                                     plotOutput("profiles", height="600px", width="1400px"),
-                                    
+                                    checkboxInput("boxplot", "Profiles as boxplots", TRUE),
                                     hr(),
 
                                     tabsetPanel(type = "tabs",
-                                                tabPanel("Ontologies", DT::dataTableOutput("Ontologies")),
-                                                tabPanel("Nitrate pathways enrichment", plotlyOutput("rank",height="400px", width="1500px"))
+                                                tabPanel("Ontologies", DT::dataTableOutput("Ontologies", width="500px")),
+                                                tabPanel("Nitrate pathways enrichment", plotlyOutput("rank", height="400px", width="1400px"))
                                     
                                   )
                                 )
@@ -85,8 +82,8 @@ server <- function(input, output) {
 
   output$profiles <- renderPlot({
     load(paste0("./Clusterings/",input$select))
-    if(input$k == "All"){plotProfile(cluster)}
-    else{plotProfile(cluster, input$k)}
+    if(input$k == "All"){plotProfile(cluster, boxplot = input$boxplot)}
+    else{plotProfile(cluster, input$k, boxplot=input$boxplot)}
   })
   
   output$Ontologies <- DT::renderDataTable({
