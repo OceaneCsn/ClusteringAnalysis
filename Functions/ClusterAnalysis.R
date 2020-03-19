@@ -54,9 +54,6 @@ plotProfile <- function(cluster, k="none", boxplot=T){
   g
 }
 
-plotProfile(cluster, boxplot = F)
-
-
 
 findNitrateGenes <- function(cluster, k="none"){
   if(k=="none"){
