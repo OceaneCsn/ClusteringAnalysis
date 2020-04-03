@@ -5,6 +5,7 @@ library(reshape2)
 suppressMessages(library(coseq, warn.conflicts = F, quietly = T))
 
 library(plotly)
+library(stringr)
 
 load("./Data/OntologyAllGenes.RData")
 load("./Data/filteredData.RData")
@@ -24,11 +25,16 @@ translate <- function(text){
   return(res)
 }
 
-plotProfile <- function(cluster, k="none", boxplot=T){
+plotProfile <- function(cluster, k="none", boxplot=T, expression = "profiles"){
   # plot all the profiles or the profile of cluster k
   results <- cluster[[2]]
   clusters <- cluster[[1]]
-  profiles <- data.frame(results@y_profiles)
+  if(expression=="profiles"){profiles <- data.frame(results@y_profiles)
+  ylab <- "Normalized expression/Mean(Normalized expression)"}
+  if(expression=="counts") {
+    profiles <- data.frame(log(as.matrix(results@tcounts)+1))
+    ylab <- "log(Normalized expresion)"
+  }
   profiles$gene <- rownames(profiles)
   d <- melt(profiles)
   d$group <- str_split_fixed(d$variable, '_', 2)[,1]
@@ -46,11 +52,11 @@ plotProfile <- function(cluster, k="none", boxplot=T){
   }
   
   g <- g +theme(plot.title = element_text(size=22, face="bold"),strip.text.x = element_text(size = 20),legend.position="bottom",
-           legend.title = element_text(size = 2, face="bold"), legend.text = element_text(size=18, angle=0),
+           legend.title = element_text(size = 2, face="bold"), legend.text = element_text(size=15, angle=0),
            axis.text.y = element_text(size = 18, angle = 30), axis.text.x = element_text(size = 0, hjust = 0, colour = "grey50"),legend.text.align=1,
-           axis.title=element_text(size=24)) + xlab("") + ylab("Normalized expression") + scale_colour_discrete("", labels=sapply(levels(as.factor(d$group)),translate)) +
-    stat_summary(fun.y=median, geom="line", aes(group=1), alpha=0.1, size = 1.5) +
-    ylim(0, 0.25) 
+           axis.title=element_text(size=24)) + xlab("") + ylab(ylab) + scale_colour_discrete("", labels=sapply(levels(as.factor(d$group)),translate)) +
+    stat_summary(fun.y=median, geom="line", aes(group=1), alpha=0.1, size = 1.5) 
+  if(expression=="profiles") g <- g + ylim(0, 0.25) 
   g
 }
 
@@ -96,10 +102,45 @@ rankClusters <- function(cluster){
           axis.title=element_text(size=17)) + coord_flip())
 }
 
-#findNitrateGenes(5,cluster)
 
-####### generation des ontologies de genes nitrates
-# nitrateGenes <- unique(c(as.vector(nGenes$Wang_2004), as.vector(nGenes$Marchive_2013_20min), as.vector(nGenes$HN_induced_Widiez_2011)))
-# nitrateGenes <- nitrateGenes[grepl("AT", nitrateGenes)]
-# ontologies <- OntologyProfile(ids = AGIToEntrez$ensembl_gene_id)
-# save(ontologies, file = "./Data/OntologyAllGenes.RData")
+glmCluster <- function(DEgenes, normalized.count){
+  
+  glmData <- melt(round(normalized.count[DEgenes,], 0))
+  print(head(glmData))
+  colnames(glmData) <- c("Condition", "Counts")
+  glmData <- glmData[sample(rownames(glmData)),]
+  
+  groups <- str_split_fixed(glmData$Condition, "_", 2)[,1]
+  glmData$Co2 <- str_split_fixed(groups, "", 3)[,1]
+  glmData$nitrate <- str_split_fixed(groups, "", 3)[,2]
+  glmData$fer <- str_split_fixed(groups, "", 3)[,3]
+  
+  
+  glmData$Co2 <- as.factor(ifelse(glmData$Co2 == "c", 0, 1))
+  glmData$nitrate <- as.factor(ifelse(glmData$nitrate == "N", 0, 1))
+  glmData$fer <- as.factor(ifelse(glmData$fer == "F", 0, 1))
+  #glmData <- glmData[c("Counts", "Co2", "nitrate", "fer", "gene")]
+  
+  formula = "Counts ~ "
+
+  for (factor in c("Co2", "nitrate", "fer")){
+    if(length(levels(glmData[,factor]))>1){formula <- paste(formula, factor, '*')}
+  }
+  
+  formula <- substr(formula, 1, nchar(formula)-1)
+  
+  glm <- glm(formula , data = glmData, family = poisson(link="log"))
+  return(glm)
+  
+}
+
+plotGlmCluster <- function(glm){
+  coefs <- glm$coefficients[2:length(glm$coefficients)]
+  d <- data.frame(Coefficient =str_remove_all(as.character(names(coefs)), "1"), Values = coefs)
+  ggplotly(ggplot(d, aes(x=Coefficient, y=Values, fill=Coefficient)) + geom_bar(color = 'black', stat = "identity", alpha = 0.4) +
+             theme(axis.text.x = element_text(size=25, angle = 320), legend.position = "none", 
+                   axis.title.x = element_blank(), axis.title.y = element_blank(), 
+                   plot.title = element_text(size=22, face="bold"), axis.text.y = element_text(size=20))+
+             ggtitle("Generalized linear model's coefficients values"), tooltip = c("Values"))
+}
+

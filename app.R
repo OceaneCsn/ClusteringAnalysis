@@ -28,7 +28,8 @@ ui <- dashboardPage(skin="black",
                     
                     dashboardSidebar(
                       sidebarMenu(
-                        menuItem("Clustering view", tabName = "view", icon = icon("project-diagram"))
+                        menuItem("Clustering view", tabName = "view", icon = icon("project-diagram")),
+                        menuItem("Ontologies", tabName = "Ontologies", icon = icon("table"))
                         #menuItem("Ontology database", tabName = "Ontology database", icon = icon("seedling"))
                       )
                     ),
@@ -41,34 +42,26 @@ ui <- dashboardPage(skin="black",
                                 
                                 fixedRow(
                                   column(
-                                    width = 5,
+                                    width = 6,
                                     selectInput("select", label = h3("Select list of genes"), width = 700,
-                                                choices = files, selected = "CO2NoIronStarv.RData")
+                                                choices = files, selected = "CO2NoIronStarv.RData"), hr(),
+                                    plotOutput("profiles", height="800px", width="1150px"),
+                                    checkboxInput("boxplot", "Profiles as boxplots", TRUE)
                                   ),
                                   column(
-                                    width = 3,
+                                    width = 5,
                                     selectInput("k", label = h3("Select cluster"), width = 300,
-                                            choices = clustList, selected = "All")
-                                  )
-                                ),
-                                hr(),
-                                fixedRow(
-                                    plotOutput("profiles", height="600px", width="1400px"),
-                                    checkboxInput("boxplot", "Profiles as boxplots", TRUE),
-                                    hr(),
-
+                                            choices = clustList, selected = "All"), hr(),
                                     tabsetPanel(type = "tabs",
-                                                tabPanel("Ontologies", DT::dataTableOutput("Ontologies", width="500px")),
-                                                tabPanel("Nitrate pathways enrichment", plotlyOutput("rank", height="400px", width="1400px"))
-                                    
+                                                tabPanel("Nitrate pathways enrichment", plotlyOutput("rank", height="700px", width="900px")),
+                                                tabPanel("GLM coefficients", plotlyOutput("coefsPlot", height="700px", width="900px")),
+                                                tabPanel("GLM summary", verbatimTextOutput("summary"))
                                   )
                                 )
-                        )
-                        # tabItem(tabName = "Ontology database",
-                        #         textInput("gene", "Ask me a gene! (AGI)", value = "AT1G08090"),
-                        #         hr()
-                        #         #DT::dataTableOutput("Ontology")
-                        # )
+                                )
+                        ),
+                        tabItem("Ontologies", 
+                                DT::dataTableOutput("Ontologies", width = 1500))
                                 
                       )
                     )
@@ -77,19 +70,27 @@ ui <- dashboardPage(skin="black",
 
 
 # Define server logic required to draw a histogram
-server <- function(input, output) {
+server <- function(input, output, session) {
   
-
+   cluster <- reactive({
+     load(paste0("./Clusterings/",input$select))
+     clustList <- c("All",unique(cluster[[1]]))
+     names(clustList) = clustList
+     clustList <- lapply(split(clustList, names(clustList)), unname)
+     updateSelectInput(session = session, inputId = "k", choices=clustList)
+     cluster
+   })
+  
   output$profiles <- renderPlot({
-    load(paste0("./Clusterings/",input$select))
-    if(input$k == "All"){plotProfile(cluster, boxplot = input$boxplot)}
-    else{plotProfile(cluster, input$k, boxplot=input$boxplot)}
+    
+    if(input$k == "All"){plotProfile(cluster(), boxplot = input$boxplot)}
+    else{plotProfile(cluster(), input$k, boxplot=input$boxplot)}
   })
   
   output$Ontologies <- DT::renderDataTable({
-    load(paste0("./Clusterings/",input$select))
-    if(input$k == "All"){findNitrateGenes(cluster)}
-    else{findNitrateGenes(cluster, input$k)}
+    
+    if(input$k == "All"){findNitrateGenes(cluster())}
+    else{findNitrateGenes(cluster(), input$k)}
   })
   
   output$Ontology <- DT::renderDataTable({
@@ -97,13 +98,27 @@ server <- function(input, output) {
   })
   
   output$rank <- renderPlotly({
-    load(paste0("./Clusterings/",input$select))
-    rankClusters(cluster)
+    rankClusters(cluster())
   })
   
+  glm <- reactive({
+    
+    if(input$k != "All"){
+
+      glmCluster(DEgenes = names(cluster()[[1]][cluster()[[1]]==input$k]), 
+                 normalized.count = data.frame(cluster()[[2]]@tcounts))
+    }
+    else{print("No cluster selected")}
+
+  })
   
-  output$test<- renderText({
-    print("coucou")
+  output$coefsPlot <- renderPlotly({
+    print(glm())
+    plotGlmCluster(glm())
+  })
+  
+  output$summary <- renderPrint({
+    summary(glm())
   })
 }
 
