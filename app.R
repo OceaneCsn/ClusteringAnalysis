@@ -77,7 +77,7 @@ server <- function(input, output, session) {
      clustList <- c("All",unique(cluster[[1]]))
      names(clustList) = clustList
      clustList <- lapply(split(clustList, names(clustList)), unname)
-     updateSelectInput(session = session, inputId = "k", choices=clustList)
+     updateSelectInput(session = session, inputId = "k", choices=clustList, selected = "All")
      cluster
    })
   
